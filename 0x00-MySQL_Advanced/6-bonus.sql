@@ -10,12 +10,10 @@ CREATE PROCEDURE AddBonus(
 BEGIN
     DECLARE project_id INT;
 
-    -- Check if the project exists
     SELECT id INTO project_id
     FROM projects
     WHERE name = project_name;
 
-    -- If project doesn't exist, create it
     IF project_id IS NULL THEN
         INSERT INTO projects (name)
         VALUES (project_name);
