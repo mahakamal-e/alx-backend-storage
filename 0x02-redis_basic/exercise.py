@@ -7,14 +7,18 @@ from functools import wraps
 
 
 def count_calls(method: Callable) -> Callable:
-    """Decorator to count how many times a method is called."""
-    @wraps(method)
-    def wrapper(self, *args, **kwargs):
-        key = self.__class__.__qualname__ + "." + method.__qualname__
-        self._redis.incr(key)  # Increment the count for the method
-        return method(self, *args, **kwargs)  # Call the original method
-    return wrapper
+    """Decorator to count the number of times a method is called."""
 
+    @wraps(method)
+    def wrapper(self, *args, **kwds):
+        """Wrapper function for the decorated method."""
+        if isinstance(self._redis, redis.Redis):
+            self._redis.incr(method.__qualname__)
+
+        return method(self, *args, **kwds)
+
+    return wrapper
+\
 def call_history(method: Callable) -> Callable:
     """Decorator to record input parameters and output values."""
     @wraps(method)
@@ -22,10 +26,8 @@ def call_history(method: Callable) -> Callable:
         key_inputs = method.__qualname__ + ":inputs"
         key_outputs = method.__qualname__ + ":outputs"
 
-        # Record input arguments
         self._redis.rpush(key_inputs, str(args))
 
-        # Call the original method and record output
         output = method(self, *args, **kwargs)
         self._redis.rpush(key_outputs, output)
 
