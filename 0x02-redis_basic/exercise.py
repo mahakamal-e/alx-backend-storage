@@ -8,7 +8,7 @@ from functools import wraps
 
 def count_calls(method: Callable) -> Callable:
     """Decorator to count the number of times a method is called."""
-    
+
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         """Wrapper function for the decorated method."""
@@ -21,16 +21,14 @@ def count_calls(method: Callable) -> Callable:
 
 def call_history(method: Callable) -> Callable:
     """Decorator to record input parameters and output values."""
-    
+
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         key_inputs = f"{method.__qualname__}:inputs"
         key_outputs = f"{method.__qualname__}:outputs"
 
-        # Record input arguments
         self._redis.rpush(key_inputs, str(args))
 
-        # Call the original method and record output
         output = method(self, *args, **kwargs)
         self._redis.rpush(key_outputs, output)
 
@@ -41,7 +39,6 @@ def call_history(method: Callable) -> Callable:
 
 def replay(method: Callable) -> None:
     """Display the history of calls to a particular function."""
-    
     key_inputs = f"{method.__qualname__}:inputs"
     key_outputs = f"{method.__qualname__}:outputs"
     redis_client = redis.Redis(host='localhost', port=6379, db=0)
