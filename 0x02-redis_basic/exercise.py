@@ -42,10 +42,10 @@ class Cache:
         if data is None:
             return None
         if fn:
-            return fn(data)
+            data = fn(data)
         return data
 
-    def get_str(self, key: str) -> Optional[str]:
+    def get_str(self, key: str) -> str:
         """
         Retrieve the data as a string.
 
@@ -57,7 +57,7 @@ class Cache:
         """
         return self.get(key, lambda d: d.decode('utf-8'))
 
-    def get_int(self, key: str) -> Optional[int]:
+    def get_int(self, key: str) -> int:
         """
         Retrieve the data as an integer.
 
