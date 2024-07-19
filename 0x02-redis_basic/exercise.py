@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """ Create a Cache class. """
 import redis
-from uuid import uuid4
+import uuid
 from typing import Union
 
 
 class Cache:
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Cache instance with a Redis client and flush the database."""
-        self._redis = redis.Redis()
+        self._redis = redis.Redis(host='localhost', port=6379, db=0)
         self._redis.flushdb()
     
     def store(self, data: Union[str, bytes, int, float]) -> str:
