@@ -1,31 +1,19 @@
 #!/usr/bin/env python3
-"""
-Main file to test the Cache class.
-"""
-from exercise import Cache
+""" Main file """
 
-def main():
-    cache = Cache()
+Cache = __import__('exercise').Cache
 
-    TEST_CASES = {
-        b"foo": None,  # bytes, no conversion
-        123: int,      # integer, convert bytes to integer
-        "bar": lambda d: d.decode("utf-8")  # string, convert bytes to UTF-8 string
-    }
+cache = Cache()
 
-    for value, fn in TEST_CASES.items():
-        key = cache.store(value)
-        result = cache.get(key, fn=fn)
-        assert result == value, f"Expected {value} but got {result}"
+s1 = cache.store("first")
+print(s1)
+s2 = cache.store("second")
+print(s2)
+s3 = cache.store("third")
+print(s3)
 
-    # Test get_str and get_int methods
-    key_str = cache.store("hello")
-    assert cache.get_str(key_str) == "hello"
+inputs = cache._redis.lrange("{}:inputs".format(cache.store.__qualname__), 0, -1)
+outputs = cache._redis.lrange("{}:outputs".format(cache.store.__qualname__), 0, -1)
 
-    key_int = cache.store(456)
-    assert cache.get_int(key_int) == 456
-
-    print("All tests passed.")
-
-if __name__ == "__main__":
-    main()
+print("inputs: {}".format(inputs))
+print("outputs: {}".format(outputs))
