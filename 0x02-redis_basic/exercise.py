@@ -36,25 +36,28 @@ def call_history(method: Callable) -> Callable:
     return wrapper
 
 
-def replay(method: Callable) -> None:
-    """Display the history of calls to a particular function."""
-    redis_obj = getattr(fn.__self__, '_redis', None)
-    if not isinstance(redis_obj, redis.Redis):
-        return
-
-    method_name = fn.__qualname__
-    inputs_name = method_name + ':inputs'
-    outputs_name = method_name + ':outputs'
-
-    inputs_list = redis_obj.lrange(inputs_name, 0, -1)
-    outputs_list = redis_obj.lrange(outputs_name, 0, -1)
-
-    counts = redis_obj.get(method_name).decode('utf-8')
-
-    print(f"{method_name} was called {counts} times:")
-
-    for input, output in zip(inputs_list, outputs_list):
-        print(f"{method_name}(*{input.decode('utf-8')}) -> {output}")
+def replay(fn: Callable):
+    '''display the history of calls of a particular function.'''
+    r = redis.Redis()
+    func_name = fn.__qualname__
+    c = r.get(func_name)
+    try:
+        c = int(c.decode("utf-8"))
+    except Exception:
+        c = 0
+    print("{} was called {} times:".format(func_name, c))
+    inputs = r.lrange("{}:inputs".format(func_name), 0, -1)
+    outputs = r.lrange("{}:outputs".format(func_name), 0, -1)
+    for inp, outp in zip(inputs, outputs):
+        try:
+            inp = inp.decode("utf-8")
+        except Exception:
+            inp = ""
+        try:
+            outp = outp.decode("utf-8")
+        except Exception:
+            outp = ""
+        print("{}(*{}) -> {}".format(func_name, inp, outp))
 
 
 class Cache:
