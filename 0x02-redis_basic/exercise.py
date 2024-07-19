@@ -25,46 +25,19 @@ class Cache:
         self._redis.set(key, data)
         return key
 
-     def get(self, key: str,
-             fn: Optional[Callable[[bytes], any]] = None) -> Optional[any]:
-        """
-        Retrieve the data from Redis by key and apply,
-        the optional conversion function.
+     def get(self, key: str, fn: Union[Callable, None] = None) -> str:
+        """Retrieves and type-converts the value of a specific key using fn"""
+        value = self._redis.get(key)
 
-        Args:
-            key: The key for the data in Redis.
-            fn: An optional callable that takes bytes and returns the desired format.
-
-        Returns:
-            The retrieved data in the desired format, or None if the key does not exist.
-        """
-        data = self._redis.get(key)
-        if data is None:
-            return None
         if fn:
-            data = fn(data)
-        return data
+            return fn(value)
+
+        return value
 
     def get_str(self, key: str) -> str:
-        """
-        Retrieve the data as a string.
-
-        Args:
-            key: The key for the data in Redis.
-
-        Returns:
-            The retrieved data as a string, or None if the key does not exist.
-        """
-        return self.get(key, lambda d: d.decode('utf-8'))
+        """Retrieves and type-converts the value of a specific key to str."""
+        return self.get(key, lambda d: d.decode("utf-8"))
 
     def get_int(self, key: str) -> int:
-        """
-        Retrieve the data as an integer.
-
-        Args:
-            key: The key for the data in Redis.
-
-        Returns:
-            The retrieved data as an integer, or None if the key does not exist.
-        """
-        return self.get(key, lambda d: int(d))
+        """Retrieves and type-converts the value of a specific key to int."""
+        return self.get(key, int)
