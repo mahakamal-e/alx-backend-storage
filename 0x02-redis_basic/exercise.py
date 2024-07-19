@@ -8,56 +8,54 @@ from functools import wraps
 
 def count_calls(method: Callable) -> Callable:
     """Decorator to count the number of times a method is called."""
-
+    
     @wraps(method)
-    def wrapper(self, *args, **kwds):
+    def wrapper(self, *args, **kwargs):
         """Wrapper function for the decorated method."""
-        if isinstance(self._redis, redis.Redis):
-            self._redis.incr(method.__qualname__)
-
-        return method(self, *args, **kwds)
+        key = f"{self.__class__.__qualname__}.{method.__qualname__}"
+        self._redis.incr(key)
+        return method(self, *args, **kwargs)
 
     return wrapper
 
 
 def call_history(method: Callable) -> Callable:
     """Decorator to record input parameters and output values."""
+    
     @wraps(method)
     def wrapper(self, *args, **kwargs):
-        key_inputs = method.__qualname__ + ":inputs"
-        key_outputs = method.__qualname__ + ":outputs"
+        key_inputs = f"{method.__qualname__}:inputs"
+        key_outputs = f"{method.__qualname__}:outputs"
 
+        # Record input arguments
         self._redis.rpush(key_inputs, str(args))
 
+        # Call the original method and record output
         output = method(self, *args, **kwargs)
         self._redis.rpush(key_outputs, output)
 
         return output
+
     return wrapper
 
 
-def replay(fn: Callable):
-    '''display the history of calls of a particular function.'''
-    r = redis.Redis()
-    func_name = fn.__qualname__
-    c = r.get(func_name)
-    try:
-        c = int(c.decode("utf-8"))
-    except Exception:
-        c = 0
-    print("{} was called {} times:".format(func_name, c))
-    inputs = r.lrange("{}:inputs".format(func_name), 0, -1)
-    outputs = r.lrange("{}:outputs".format(func_name), 0, -1)
-    for inp, outp in zip(inputs, outputs):
-        try:
-            inp = inp.decode("utf-8")
-        except Exception:
-            inp = ""
-        try:
-            outp = outp.decode("utf-8")
-        except Exception:
-            outp = ""
-        print("{}(*{}) -> {}".format(func_name, inp, outp))
+def replay(method: Callable) -> None:
+    """Display the history of calls to a particular function."""
+    
+    key_inputs = f"{method.__qualname__}:inputs"
+    key_outputs = f"{method.__qualname__}:outputs"
+    redis_client = redis.Redis(host='localhost', port=6379, db=0)
+
+    inputs = redis_client.lrange(key_inputs, 0, -1)
+    outputs = redis_client.lrange(key_outputs, 0, -1)
+
+    print(f"{method.__qualname__} was called {len(inputs)} times:")
+
+    for input_val, output_val in zip(inputs, outputs):
+        # Safely convert bytes to string
+        input_str = str(input_val.decode('utf-8'))
+        output_str = output_val.decode('utf-8')
+        print(f"{method.__qualname__}(*{input_str}) -> {output_str}")
 
 
 class Cache:
