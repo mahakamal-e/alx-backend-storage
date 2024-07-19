@@ -8,7 +8,7 @@ from typing import Union
 class Cache:
     def __init__(self):
         """Initialize the Cache instance with a Redis client and flush the database."""
-        self._redis = redis.Redis(host='localhost', port=6379, db=0)
+        self._redis = redis.Redis()
         self._redis.flushdb()
     
     def store(self, data: Union[str, bytes, int, float]) -> str:
